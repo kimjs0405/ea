@@ -470,17 +470,33 @@
         
         async function saveBulletin(e) {
             e.preventDefault();
-            const data = { title: document.getElementById('bulletinTitle').value, bulletinDate: document.getElementById('bulletinDate').value, content: document.getElementById('bulletinContent').value, imageUrl: document.getElementById('bulletinImageUrl').value };
+            const title = document.getElementById('bulletinTitle').value;
+            const bulletinDate = document.getElementById('bulletinDate').value;
+            const content = document.getElementById('bulletinContent').value;
+            const imageUrl = document.getElementById('bulletinImageUrl').value;
+            const data = { title, bulletinDate, content, imageUrl };
+            
             try {
                 if (editingId.bulletin) {
                     typeof updateData === 'function' ? await updateData('bulletins', editingId.bulletin, data) : updateLocal('elim-bulletins', editingId.bulletin, data);
                     showStatus('수정되었습니다.');
                 } else {
+                    // 주보 추가
                     typeof addData === 'function' ? await addData('bulletins', data) : addLocal('elim-bulletins', data);
-                    showStatus('추가되었습니다.');
+                    
+                    // 공지사항에도 자동 등록
+                    const noticeData = { 
+                        title: `[주보] ${title}`, 
+                        content: content || `${bulletinDate} 주보가 등록되었습니다.`, 
+                        author: '관리자' 
+                    };
+                    typeof addData === 'function' ? await addData('notices', noticeData) : addLocal('elim-notices', noticeData);
+                    
+                    showStatus('주보가 추가되고 공지사항에도 등록되었습니다.');
                 }
                 closeBulletinModal();
                 await loadBulletins();
+                await loadNotices();
             } catch (err) { showStatus('저장 실패', 'error'); }
         }
         

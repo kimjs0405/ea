@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>엘림교회 관리자 페이지</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; background: #f5f7fa; color: #333; }
+        .admin-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #2C5F8D 0%, #1E4263 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .login-section { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 50px auto; }
+        .login-section h2 { margin-bottom: 20px; color: #2C5F8D; }
+        .login-section input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
+        .login-section button { width: 100%; padding: 12px; background: #2C5F8D; color: white; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .login-section button:hover { background: #1E4263; }
+        .admin-content { display: none; }
+        .admin-content.active { display: block; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tab-btn { padding: 12px 24px; background: white; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .tab-btn:hover { border-color: #2C5F8D; color: #2C5F8D; }
+        .tab-btn.active { background: #2C5F8D; color: white; border-color: #2C5F8D; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .section-card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section-card h2 { color: #2C5F8D; margin-bottom: 20px; font-size: 1.5rem; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; }
+        .btn-primary { background: #2C5F8D; color: white; }
+        .btn-primary:hover { background: #1E4263; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; font-family: inherit; }
+        .form-group textarea { min-height: 150px; resize: vertical; }
+        .item-list { margin-top: 20px; }
+        .item-card { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #2C5F8D; }
+        .item-card h3 { color: #2C5F8D; margin-bottom: 10px; }
+        .item-card .meta { color: #666; font-size: 0.9rem; margin-bottom: 10px; }
+        .item-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); overflow: auto; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .modal-close { position: absolute; right: 20px; top: 20px; font-size: 28px; cursor: pointer; color: #999; }
+        .modal-close:hover { color: #333; }
+        .status-message { padding: 12px; border-radius: 5px; margin-bottom: 20px; display: none; }
+        .status-message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-message.show { display: block; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .empty-state { text-align: center; padding: 40px; color: #999; }
+        @media (max-width: 768px) { .admin-container { padding: 10px; } .tabs { flex-direction: column; } .tab-btn { width: 100%; } }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div id="loginSection" class="login-section">
+            <h2>🔐 관리자 로그인</h2>
+            <input type="text" id="adminId" placeholder="아이디">
+            <input type="password" id="adminPassword" placeholder="비밀번호">
+            <button onclick="handleLogin()">로그인</button>
+            <div id="loginError" class="status-message error"></div>
+        </div>
+        
+        <div id="adminContent" class="admin-content">
+            <div class="header">
+                <h1>⛪ 엘림교회 관리자</h1>
+                <p>웹사이트 콘텐츠를 관리합니다</p>
+                <button onclick="handleLogout()" style="margin-top: 15px; padding: 8px 16px; background: rgba(255,255,255,0.2); border: 1px solid white; color: white; border-radius: 5px; cursor: pointer;">로그아웃</button>
+            </div>
+            
+            <div id="statusMessage" class="status-message"></div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('board')">📝 게시판</button>
+                <button class="tab-btn" onclick="switchTab('notices')">📢 공지사항</button>
+                <button class="tab-btn" onclick="switchTab('bulletins')">📋 주보광고</button>
+                <button class="tab-btn" onclick="switchTab('albums')">📷 행사앨범</button>
+                <button class="tab-btn" onclick="switchTab('news')">📣 교회소식</button>
+                <button class="tab-btn" onclick="switchTab('youtube')">🎬 YouTube</button>
+            </div>
+            
+            <div id="tab-board" class="tab-content active">
+                <div class="section-card">
+                    <h2>📝 게시판 관리</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="openBoardModal()">+ 새 게시글</button>
+                        <button class="btn btn-secondary" onclick="loadBoardPosts()">새로고침</button>
+                    </div>
+                    <div id="boardList" class="item-list"></div>
+                </div>
+            </div>
+            
+            <div id="tab-notices" class="tab-content">
+                <div class="section-card">
+                    <h2>📢 공지사항 관리</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="openNoticeModal()">+ 새 공지사항</button>
+                        <button class="btn btn-secondary" onclick="loadNotices()">새로고침</button>
+                    </div>
+                    <div id="noticeList" class="item-list"></div>
+                </div>
+            </div>
+            
+            <div id="tab-bulletins" class="tab-content">
+                <div class="section-card">
+                    <h2>📋 주보광고 관리</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="openBulletinModal()">+ 새 주보</button>
+                        <button class="btn btn-secondary" onclick="loadBulletins()">새로고침</button>
+                    </div>
+                    <div id="bulletinList" class="item-list"></div>
+                </div>
+            </div>
+            
+            <div id="tab-albums" class="tab-content">
+                <div class="section-card">
+                    <h2>📷 행사앨범 관리</h2>
+                    <div class="form-group">
+                        <label>이미지 URL</label>
+                        <input type="text" id="albumUrl" placeholder="https://example.com/image.jpg">
+                        <button class="btn btn-primary" onclick="addAlbum()" style="margin-top: 10px;">추가</button>
+                    </div>
+                    <div id="albumList" class="item-list"></div>
+                </div>
+            </div>
+            
+            <div id="tab-news" class="tab-content">
+                <div class="section-card">
+                    <h2>📣 교회소식 바</h2>
+                    <button class="btn btn-primary" onclick="openNewsScrollModal()" style="margin-bottom: 20px;">+ 새 소식</button>
+                    <div id="newsScrollList" class="item-list"></div>
+                </div>
+            </div>
+            
+            <div id="tab-youtube" class="tab-content">
+                <div class="section-card">
+                    <h2>🎬 YouTube 설정</h2>
+                    <div class="form-group">
+                        <label>YouTube 채널 ID</label>
+                        <input type="text" id="youtubeChannelId" placeholder="UCxxxxxxxxxx">
+                        <button class="btn btn-primary" onclick="saveChannelId()" style="margin-top: 10px;">저장</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 모달들 -->
+    <div id="boardModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeBoardModal()">&times;</span>
+            <h2 id="boardModalTitle">새 게시글</h2>
+            <form onsubmit="saveBoardPost(event)">
+                <div class="form-group"><label>제목 *</label><input type="text" id="boardTitle" required></div>
+                <div class="form-group"><label>작성자 *</label><input type="text" id="boardAuthor" required></div>
+                <div class="form-group"><label>내용 *</label><textarea id="boardContent" required></textarea></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBoardModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="noticeModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeNoticeModal()">&times;</span>
+            <h2 id="noticeModalTitle">새 공지사항</h2>
+            <form onsubmit="saveNotice(event)">
+                <div class="form-group"><label>제목 *</label><input type="text" id="noticeTitle" required></div>
+                <div class="form-group"><label>카테고리</label>
+                    <select id="noticeCategory">
+                        <option value="공지">공지</option>
+                        <option value="이벤트">이벤트</option>
+                        <option value="예배">예배</option>
+                        <option value="교회활동">교회활동</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>내용 *</label><textarea id="noticeContent" required></textarea></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeNoticeModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="bulletinModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeBulletinModal()">&times;</span>
+            <h2 id="bulletinModalTitle">새 주보</h2>
+            <form onsubmit="saveBulletin(event)">
+                <div class="form-group"><label>제목 *</label><input type="text" id="bulletinTitle" required></div>
+                <div class="form-group"><label>날짜 *</label><input type="text" id="bulletinDate" placeholder="2024.01.01" required></div>
+                <div class="form-group"><label>내용</label><textarea id="bulletinContent"></textarea></div>
+                <div class="form-group"><label>이미지 URL</label><input type="text" id="bulletinImageUrl" placeholder="https://..."></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeBulletinModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="newsScrollModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeNewsScrollModal()">&times;</span>
+            <h2 id="newsScrollModalTitle">새 소식</h2>
+            <form onsubmit="saveNewsScroll(event)">
+                <div class="form-group"><label>내용 *</label><textarea id="newsScrollText" required></textarea></div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn btn-primary">저장</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeNewsScrollModal()">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        // 관리자 인증 해시
+        const AUTH_HASH = {
+            id: 'a6a86ce1318a9bb43806d8c9221ac3c0e85f2e2f7378993ebee73a3e7cd40865',
+            pw: 'd2e874303c6c41145065ef3d78bba5d09e7a4de3355a7b279d6fee5659c15ef4'
+        };
+        
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // 데이터 저장소
+        let boardPosts = [], notices = [], bulletins = [], albums = [], newsScrollItems = [];
+        let editingId = { board: null, notice: null, bulletin: null, newsScroll: null };
+        
+        // 로그인
+        window.addEventListener('load', () => {
+            if (sessionStorage.getItem('adminLoggedIn') === 'true') {
+                showAdminContent();
+                loadAllData();
+            }
+        });
+        
+        async function handleLogin() {
+            const id = document.getElementById('adminId').value;
+            const pw = document.getElementById('adminPassword').value;
+            if (!id || !pw) { showError('아이디와 비밀번호를 입력해주세요.'); return; }
+            
+            const idHash = await hashString(id);
+            const pwHash = await hashString(pw);
+            
+            if (idHash === AUTH_HASH.id && pwHash === AUTH_HASH.pw) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                showAdminContent();
+                loadAllData();
+            } else {
+                showError('아이디 또는 비밀번호가 올바르지 않습니다.');
+            }
+        }
+        
+        function handleLogout() {
+            sessionStorage.removeItem('adminLoggedIn');
+            location.reload();
+        }
+        
+        function showAdminContent() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('adminContent').classList.add('active');
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        function showStatus(msg, type='success') {
+            const el = document.getElementById('statusMessage');
+            el.textContent = msg;
+            el.className = `status-message ${type} show`;
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        function showError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+        
+        async function loadAllData() {
+            await loadBoardPosts();
+            await loadNotices();
+            await loadBulletins();
+            await loadAlbums();
+            await loadNewsScrollItems();
+            await loadSettings();
+        }
+        
+        // ===== 게시판 =====
+        async function loadBoardPosts() {
+            const container = document.getElementById('boardList');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            try {
+                boardPosts = typeof getData === 'function' ? await getData('posts') : JSON.parse(localStorage.getItem('elim-board-posts') || '[]');
+                if (boardPosts.length === 0) { container.innerHTML = '<div class="empty-state">게시글이 없습니다.</div>'; return; }
+                boardPosts.sort((a, b) => (b.date || 0) - (a.date || 0));
+                container.innerHTML = boardPosts.map((p, i) => `
+                    <div class="item-card">
+                        <h3>${p.title || '제목 없음'}</h3>
+                        <div class="meta">📅 ${new Date(p.date).toLocaleDateString('ko-KR')} | 👤 ${p.author || '작성자'}</div>
+                        <p>${(p.content || '').substring(0, 100)}...</p>
+                        <div class="item-actions">
+                            <button class="btn btn-primary" onclick="editBoardPost(${i})">수정</button>
+                            <button class="btn btn-danger" onclick="deleteBoardPost('${p.id}')">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { container.innerHTML = '<div class="empty-state">로드 실패</div>'; }
+        }
+        
+        function openBoardModal(idx = null) {
+            editingId.board = idx !== null ? boardPosts[idx].id : null;
+            document.getElementById('boardModalTitle').textContent = idx !== null ? '게시글 수정' : '새 게시글';
+            if (idx !== null) {
+                document.getElementById('boardTitle').value = boardPosts[idx].title || '';
+                document.getElementById('boardAuthor').value = boardPosts[idx].author || '';
+                document.getElementById('boardContent').value = boardPosts[idx].content || '';
+            } else {
+                document.getElementById('boardTitle').value = '';
+                document.getElementById('boardAuthor').value = '';
+                document.getElementById('boardContent').value = '';
+            }
+            document.getElementById('boardModal').classList.add('active');
+        }
+        
+        function closeBoardModal() { document.getElementById('boardModal').classList.remove('active'); editingId.board = null; }
+        function editBoardPost(idx) { openBoardModal(idx); }
+        
+        async function saveBoardPost(e) {
+            e.preventDefault();
+            const data = { title: document.getElementById('boardTitle').value, author: document.getElementById('boardAuthor').value, content: document.getElementById('boardContent').value };
+            try {
+                if (editingId.board) {
+                    typeof updateData === 'function' ? await updateData('posts', editingId.board, data) : updateLocal('elim-board-posts', editingId.board, data);
+                    showStatus('수정되었습니다.');
+                } else {
+                    typeof addData === 'function' ? await addData('posts', data) : addLocal('elim-board-posts', data);
+                    showStatus('추가되었습니다.');
+                }
+                closeBoardModal();
+                await loadBoardPosts();
+            } catch (err) { showStatus('저장 실패', 'error'); }
+        }
+        
+        async function deleteBoardPost(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                typeof deleteData === 'function' ? await deleteData('posts', id) : deleteLocal('elim-board-posts', id);
+                showStatus('삭제되었습니다.');
+                await loadBoardPosts();
+            } catch (err) { showStatus('삭제 실패', 'error'); }
+        }
+        
+        // ===== 공지사항 =====
+        async function loadNotices() {
+            const container = document.getElementById('noticeList');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            try {
+                notices = typeof getData === 'function' ? await getData('notices') : JSON.parse(localStorage.getItem('elim-notices') || '[]');
+                if (notices.length === 0) { container.innerHTML = '<div class="empty-state">공지사항이 없습니다.</div>'; return; }
+                notices.sort((a, b) => (b.date || 0) - (a.date || 0));
+                container.innerHTML = notices.map((n, i) => `
+                    <div class="item-card">
+                        <h3>${n.title || '제목 없음'}</h3>
+                        <div class="meta">📅 ${new Date(n.date).toLocaleDateString('ko-KR')} | 📌 ${n.category || '공지'}</div>
+                        <div class="item-actions">
+                            <button class="btn btn-primary" onclick="editNotice(${i})">수정</button>
+                            <button class="btn btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { container.innerHTML = '<div class="empty-state">로드 실패</div>'; }
+        }
+        
+        function openNoticeModal(idx = null) {
+            editingId.notice = idx !== null ? notices[idx].id : null;
+            document.getElementById('noticeModalTitle').textContent = idx !== null ? '공지사항 수정' : '새 공지사항';
+            if (idx !== null) {
+                document.getElementById('noticeTitle').value = notices[idx].title || '';
+                document.getElementById('noticeCategory').value = notices[idx].category || '공지';
+                document.getElementById('noticeContent').value = notices[idx].content || '';
+            } else {
+                document.getElementById('noticeTitle').value = '';
+                document.getElementById('noticeCategory').value = '공지';
+                document.getElementById('noticeContent').value = '';
+            }
+            document.getElementById('noticeModal').classList.add('active');
+        }
+        
+        function closeNoticeModal() { document.getElementById('noticeModal').classList.remove('active'); editingId.notice = null; }
+        function editNotice(idx) { openNoticeModal(idx); }
+        
+        async function saveNotice(e) {
+            e.preventDefault();
+            const data = { title: document.getElementById('noticeTitle').value, category: document.getElementById('noticeCategory').value, content: document.getElementById('noticeContent').value, author: '관리자' };
+            try {
+                if (editingId.notice) {
+                    typeof updateData === 'function' ? await updateData('notices', editingId.notice, data) : updateLocal('elim-notices', editingId.notice, data);
+                    showStatus('수정되었습니다.');
+                } else {
+                    typeof addData === 'function' ? await addData('notices', data) : addLocal('elim-notices', data);
+                    showStatus('추가되었습니다.');
+                }
+                closeNoticeModal();
+                await loadNotices();
+            } catch (err) { showStatus('저장 실패', 'error'); }
+        }
+        
+        async function deleteNotice(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                typeof deleteData === 'function' ? await deleteData('notices', id) : deleteLocal('elim-notices', id);
+                showStatus('삭제되었습니다.');
+                await loadNotices();
+            } catch (err) { showStatus('삭제 실패', 'error'); }
+        }
+        
+        // ===== 주보광고 =====
+        async function loadBulletins() {
+            const container = document.getElementById('bulletinList');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            try {
+                bulletins = typeof getData === 'function' ? await getData('bulletins') : JSON.parse(localStorage.getItem('elim-bulletins') || '[]');
+                if (bulletins.length === 0) { container.innerHTML = '<div class="empty-state">주보가 없습니다.</div>'; return; }
+                container.innerHTML = bulletins.map((b, i) => `
+                    <div class="item-card">
+                        <h3>${b.title || '제목 없음'}</h3>
+                        <div class="meta">📅 ${b.bulletinDate || b.date || ''}</div>
+                        ${b.imageUrl ? `<img src="${b.imageUrl}" style="max-width: 200px; margin: 10px 0; border-radius: 5px;">` : ''}
+                        <div class="item-actions">
+                            <button class="btn btn-primary" onclick="editBulletin(${i})">수정</button>
+                            <button class="btn btn-danger" onclick="deleteBulletin('${b.id}')">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { container.innerHTML = '<div class="empty-state">로드 실패</div>'; }
+        }
+        
+        function openBulletinModal(idx = null) {
+            editingId.bulletin = idx !== null ? bulletins[idx].id : null;
+            document.getElementById('bulletinModalTitle').textContent = idx !== null ? '주보 수정' : '새 주보';
+            if (idx !== null) {
+                document.getElementById('bulletinTitle').value = bulletins[idx].title || '';
+                document.getElementById('bulletinDate').value = bulletins[idx].bulletinDate || bulletins[idx].date || '';
+                document.getElementById('bulletinContent').value = bulletins[idx].content || '';
+                document.getElementById('bulletinImageUrl').value = bulletins[idx].imageUrl || '';
+            } else {
+                document.getElementById('bulletinTitle').value = '';
+                document.getElementById('bulletinDate').value = '';
+                document.getElementById('bulletinContent').value = '';
+                document.getElementById('bulletinImageUrl').value = '';
+            }
+            document.getElementById('bulletinModal').classList.add('active');
+        }
+        
+        function closeBulletinModal() { document.getElementById('bulletinModal').classList.remove('active'); editingId.bulletin = null; }
+        function editBulletin(idx) { openBulletinModal(idx); }
+        
+        async function saveBulletin(e) {
+            e.preventDefault();
+            const data = { title: document.getElementById('bulletinTitle').value, bulletinDate: document.getElementById('bulletinDate').value, content: document.getElementById('bulletinContent').value, imageUrl: document.getElementById('bulletinImageUrl').value };
+            try {
+                if (editingId.bulletin) {
+                    typeof updateData === 'function' ? await updateData('bulletins', editingId.bulletin, data) : updateLocal('elim-bulletins', editingId.bulletin, data);
+                    showStatus('수정되었습니다.');
+                } else {
+                    typeof addData === 'function' ? await addData('bulletins', data) : addLocal('elim-bulletins', data);
+                    showStatus('추가되었습니다.');
+                }
+                closeBulletinModal();
+                await loadBulletins();
+            } catch (err) { showStatus('저장 실패', 'error'); }
+        }
+        
+        async function deleteBulletin(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                typeof deleteData === 'function' ? await deleteData('bulletins', id) : deleteLocal('elim-bulletins', id);
+                showStatus('삭제되었습니다.');
+                await loadBulletins();
+            } catch (err) { showStatus('삭제 실패', 'error'); }
+        }
+        
+        // ===== 행사앨범 =====
+        async function loadAlbums() {
+            const container = document.getElementById('albumList');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            try {
+                albums = typeof getData === 'function' ? await getData('albums') : JSON.parse(localStorage.getItem('elim-albums') || '[]');
+                if (albums.length === 0) { container.innerHTML = '<div class="empty-state">앨범이 없습니다.</div>'; return; }
+                container.innerHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">' + albums.map(a => `
+                    <div class="item-card" style="padding: 10px;">
+                        <img src="${a.imageUrl}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 5px;">
+                        <button class="btn btn-danger" onclick="deleteAlbum('${a.id}')" style="width: 100%; margin-top: 10px;">삭제</button>
+                    </div>
+                `).join('') + '</div>';
+            } catch (e) { container.innerHTML = '<div class="empty-state">로드 실패</div>'; }
+        }
+        
+        async function addAlbum() {
+            const url = document.getElementById('albumUrl').value.trim();
+            if (!url) { showStatus('URL을 입력하세요.', 'error'); return; }
+            try {
+                typeof addData === 'function' ? await addData('albums', { imageUrl: url }) : addLocal('elim-albums', { imageUrl: url });
+                showStatus('추가되었습니다.');
+                document.getElementById('albumUrl').value = '';
+                await loadAlbums();
+            } catch (err) { showStatus('추가 실패', 'error'); }
+        }
+        
+        async function deleteAlbum(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                typeof deleteData === 'function' ? await deleteData('albums', id) : deleteLocal('elim-albums', id);
+                showStatus('삭제되었습니다.');
+                await loadAlbums();
+            } catch (err) { showStatus('삭제 실패', 'error'); }
+        }
+        
+        // ===== 교회소식 =====
+        async function loadNewsScrollItems() {
+            const container = document.getElementById('newsScrollList');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            try {
+                newsScrollItems = typeof getData === 'function' ? await getData('newsScroll') : JSON.parse(localStorage.getItem('elim-news-scroll') || '[]');
+                if (newsScrollItems.length === 0) { container.innerHTML = '<div class="empty-state">소식이 없습니다.</div>'; return; }
+                container.innerHTML = newsScrollItems.map((n, i) => `
+                    <div class="item-card">
+                        <p>${n.text || ''}</p>
+                        <div class="item-actions">
+                            <button class="btn btn-primary" onclick="editNewsScroll(${i})">수정</button>
+                            <button class="btn btn-danger" onclick="deleteNewsScroll('${n.id}')">삭제</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) { container.innerHTML = '<div class="empty-state">로드 실패</div>'; }
+        }
+        
+        function openNewsScrollModal(idx = null) {
+            editingId.newsScroll = idx !== null ? newsScrollItems[idx].id : null;
+            document.getElementById('newsScrollModalTitle').textContent = idx !== null ? '소식 수정' : '새 소식';
+            document.getElementById('newsScrollText').value = idx !== null ? (newsScrollItems[idx].text || '') : '';
+            document.getElementById('newsScrollModal').classList.add('active');
+        }
+        
+        function closeNewsScrollModal() { document.getElementById('newsScrollModal').classList.remove('active'); editingId.newsScroll = null; }
+        function editNewsScroll(idx) { openNewsScrollModal(idx); }
+        
+        async function saveNewsScroll(e) {
+            e.preventDefault();
+            const data = { text: document.getElementById('newsScrollText').value };
+            try {
+                if (editingId.newsScroll) {
+                    typeof updateData === 'function' ? await updateData('newsScroll', editingId.newsScroll, data) : updateLocal('elim-news-scroll', editingId.newsScroll, data);
+                    showStatus('수정되었습니다.');
+                } else {
+                    typeof addData === 'function' ? await addData('newsScroll', data) : addLocal('elim-news-scroll', data);
+                    showStatus('추가되었습니다.');
+                }
+                closeNewsScrollModal();
+                await loadNewsScrollItems();
+            } catch (err) { showStatus('저장 실패', 'error'); }
+        }
+        
+        async function deleteNewsScroll(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            try {
+                typeof deleteData === 'function' ? await deleteData('newsScroll', id) : deleteLocal('elim-news-scroll', id);
+                showStatus('삭제되었습니다.');
+                await loadNewsScrollItems();
+            } catch (err) { showStatus('삭제 실패', 'error'); }
+        }
+        
+        // ===== YouTube 설정 =====
+        async function loadSettings() {
+            try {
+                const settings = typeof getSettings === 'function' ? await getSettings() : JSON.parse(localStorage.getItem('elim-settings') || '{}');
+                document.getElementById('youtubeChannelId').value = settings.youtubeChannelId || '';
+            } catch (e) { console.error('설정 로드 실패:', e); }
+        }
+        
+        async function saveChannelId() {
+            const channelId = document.getElementById('youtubeChannelId').value.trim();
+            try {
+                typeof saveSettings === 'function' ? await saveSettings({ youtubeChannelId: channelId }) : localStorage.setItem('elim-settings', JSON.stringify({ youtubeChannelId: channelId }));
+                showStatus('저장되었습니다.');
+            } catch (err) { showStatus('저장 실패', 'error'); }
+        }
+        
+        // ===== localStorage 헬퍼 (Firebase 없을 때 폴백) =====
+        function addLocal(key, data) {
+            const items = JSON.parse(localStorage.getItem(key) || '[]');
+            data.id = Date.now().toString();
+            data.date = Date.now();
+            items.push(data);
+            localStorage.setItem(key, JSON.stringify(items));
+        }
+        
+        function updateLocal(key, id, data) {
+            const items = JSON.parse(localStorage.getItem(key) || '[]');
+            const idx = items.findIndex(i => i.id === id);
+            if (idx !== -1) { items[idx] = { ...items[idx], ...data }; localStorage.setItem(key, JSON.stringify(items)); }
+        }
+        
+        function deleteLocal(key, id) {
+            const items = JSON.parse(localStorage.getItem(key) || '[]');
+            localStorage.setItem(key, JSON.stringify(items.filter(i => i.id !== id)));
+        }
+    </script>
+</body>
+</html>

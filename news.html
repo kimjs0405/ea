@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공지사항 - 엘림교회</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+        }
+        
+        .news-page-header {
+            background: linear-gradient(135deg, #2C5F8D 0%, #1E4263 100%);
+            color: white;
+            padding: 100px 0 60px;
+            margin-top: 70px;
+            text-align: center;
+        }
+        
+        .news-page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .news-page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .news-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .news-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #2C5F8D;
+            background: white;
+            color: #2C5F8D;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #2C5F8D;
+            color: white;
+        }
+        
+        .news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .news-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .news-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .news-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .news-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .news-category {
+            background: #2C5F8D;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .news-item h3 {
+            color: #2C3E50;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .news-item p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .news-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #999;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+        }
+        
+        .pagination button {
+            padding: 10px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #2C5F8D;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover {
+            background: #2C5F8D;
+            color: white;
+            border-color: #2C5F8D;
+        }
+        
+        .pagination button.active {
+            background: #2C5F8D;
+            color: white;
+            border-color: #2C5F8D;
+        }
+        
+        @media (max-width: 768px) {
+            .news-page-header h1 {
+                font-size: 2rem;
+            }
+            
+            .news-item {
+                padding: 20px;
+            }
+            
+            .news-item h3 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 -->
+    <header id="header" class="header">
+        <nav class="nav container">
+            <div class="nav-brand">
+                <a href="index.html">
+                    <img src="logo.png" alt="엘림교회 로고">
+                    <span>엘림교회</span>
+                </a>
+            </div>
+            <ul class="nav-menu" id="nav-menu">
+                <li class="nav-item"><a href="index.html" class="nav-link">홈</a></li>
+                <li class="nav-item"><a href="about.html" class="nav-link">교회소개</a></li>
+                <li class="nav-item"><a href="news.html" class="nav-link">공지사항</a></li>
+                <li class="nav-item"><a href="board.html" class="nav-link">게시판</a></li>
+                <li class="nav-item"><a href="sermons.html" class="nav-link">설교영상</a></li>
+                <li class="nav-item"><a href="contact.html" class="nav-link">오시는길</a></li>
+            </ul>
+            <div class="nav-right">
+                <a href="admin.html" class="login-btn">
+                    <span class="login-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </span>
+                    <span class="login-text">로그인</span>
+                </a>
+                <div class="nav-toggle" id="nav-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- 공지사항 페이지 헤더 -->
+    <div class="news-page-header">
+        <div class="container">
+            <h1>공지사항</h1>
+            <p>교회 소식과 중요한 공지사항을 확인하세요</p>
+        </div>
+    </div>
+
+    <!-- 공지사항 목록 -->
+    <div class="news-container">
+        <div class="news-filters">
+            <button class="filter-btn active" onclick="filterNews('all')">전체</button>
+            <button class="filter-btn" onclick="filterNews('공지')">공지</button>
+            <button class="filter-btn" onclick="filterNews('이벤트')">이벤트</button>
+            <button class="filter-btn" onclick="filterNews('예배')">예배</button>
+            <button class="filter-btn" onclick="filterNews('교회활동')">교회활동</button>
+        </div>
+        
+        <div class="news-list" id="newsList">
+            <div class="loading-message">
+                <p>공지사항을 불러오는 중...</p>
+            </div>
+        </div>
+        
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+
+    <script>
+        let allNews = [];
+        let filteredNews = [];
+        let currentFilter = 'all';
+        let newsCurrentPage = 1;
+        const newsPerPage = 10;
+
+        // localStorage에서 공지사항 로드
+        function loadNews() {
+            const container = document.getElementById('newsList');
+            container.innerHTML = '<div class="loading-message"><p>공지사항을 불러오는 중...</p></div>';
+            
+            try {
+                const notices = JSON.parse(localStorage.getItem('elim-notices') || '[]');
+                
+                // 공지사항 형식으로 변환
+                allNews = notices.map(notice => ({
+                    id: notice.id,
+                    title: notice.title,
+                    content: notice.content,
+                    author: notice.author || '관리자',
+                    date: new Date(notice.date || Date.now()),
+                    category: notice.category || '공지'
+                }));
+                
+                // 날짜순 정렬 (최신순)
+                allNews.sort((a, b) => b.date - a.date);
+                
+                filterNews(currentFilter);
+            } catch (error) {
+                console.error('공지사항 로드 실패:', error);
+                container.innerHTML = '<div class="empty-state"><h3>공지사항을 불러오는데 실패했습니다.</h3><p>잠시 후 다시 시도해주세요.</p></div>';
+            }
+        }
+
+        function filterNews(category) {
+            currentFilter = category;
+            newsCurrentPage = 1;
+            
+            // 필터 버튼 활성화
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event?.target?.classList.add('active');
+            
+            // 필터링
+            if (category === 'all') {
+                filteredNews = [...allNews];
+            } else {
+                filteredNews = allNews.filter(news => news.category === category);
+            }
+            
+            renderNews();
+        }
+
+        function renderNews() {
+            const container = document.getElementById('newsList');
+            
+            if (!filteredNews || filteredNews.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>공지사항이 없습니다</h3><p>등록된 공지사항이 없습니다.</p></div>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            
+            // 페이지네이션
+            const totalPages = Math.ceil(filteredNews.length / newsPerPage);
+            const start = (newsCurrentPage - 1) * newsPerPage;
+            const end = start + newsPerPage;
+            const pageNews = filteredNews.slice(start, end);
+            
+            let html = '';
+            pageNews.forEach(news => {
+                const dateStr = news.date.toLocaleDateString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                html += `
+                    <div class="news-item" onclick="viewNews(${news.id})">
+                        <div class="news-item-header">
+                            <span class="news-date">📅 ${dateStr}</span>
+                            <span class="news-category">${news.category}</span>
+                        </div>
+                        <h3>${news.title}</h3>
+                        <p>${news.content.replace(/\n/g, ' ').substring(0, 150)}${news.content.length > 150 ? '...' : ''}</p>
+                        <div class="news-meta">
+                            <span>👤 ${news.author}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="${i === newsCurrentPage ? 'active' : ''}" onclick="goToNewsPage(${i})">${i}</button>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function goToNewsPage(page) {
+            newsCurrentPage = page;
+            renderNews();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function viewNews(id) {
+            const news = allNews.find(n => n.id === id);
+            if (!news) return;
+            
+            const dateStr = news.date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // 모달 생성
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    <div style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                            <span style="color: #666; font-size: 0.9rem;">📅 ${dateStr}</span>
+                            <span class="news-category">${news.category}</span>
+                        </div>
+                        <h2 style="color: #2C3E50; margin-bottom: 20px; font-size: 1.8rem;">${news.title}</h2>
+                        <div style="margin-bottom: 20px; font-size: 0.9rem; color: #666; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                            <span>👤 ${news.author}</span>
+                        </div>
+                    </div>
+                    <div style="line-height: 1.8; color: #333; white-space: pre-wrap; font-size: 1rem; padding: 20px; background: #f9f9f9; border-radius: 5px;">
+                        ${news.content.replace(/\n/g, '<br>')}
+                    </div>
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">닫기</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // 모달 외부 클릭시 닫기
+            modal.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.remove();
+                }
+            };
+        }
+
+        // 페이지 로드 시 공지사항 불러오기
+        window.addEventListener('load', () => {
+            loadNews();
+        });
+    </script>
+    <!-- 푸터 -->
+    <footer style="text-align: center; padding: 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0;">
+        <p style="margin: 5px 0; color: #666; font-size: 0.9rem;">예수교대한성결교회 엘림교회</p>
+        <p style="margin: 5px 0; color: #666; font-size: 0.9rem;">T. 02-886-4623</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
+

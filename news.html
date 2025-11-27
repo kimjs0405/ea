@@ -226,13 +226,6 @@
 
     <!-- 공지사항 목록 -->
     <div class="news-container">
-        <div class="news-filters">
-            <button class="filter-btn active" onclick="filterNews('all')">전체</button>
-            <button class="filter-btn" onclick="filterNews('공지')">공지</button>
-            <button class="filter-btn" onclick="filterNews('이벤트')">이벤트</button>
-            <button class="filter-btn" onclick="filterNews('예배')">예배</button>
-            <button class="filter-btn" onclick="filterNews('교회활동')">교회활동</button>
-        </div>
         
         <div class="news-list" id="newsList">
             <div class="loading-message">
@@ -244,92 +237,69 @@
     </div>
 
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <script>
         let allNews = [];
-        let filteredNews = [];
-        let currentFilter = 'all';
         let newsCurrentPage = 1;
         const newsPerPage = 10;
 
-        // localStorage에서 공지사항 로드
-        function loadNews() {
+        // Firebase에서 공지사항 로드
+        async function loadNews() {
             const container = document.getElementById('newsList');
             container.innerHTML = '<div class="loading-message"><p>공지사항을 불러오는 중...</p></div>';
             
             try {
-                const notices = JSON.parse(localStorage.getItem('elim-notices') || '[]');
+                let notices = [];
+                if (typeof getData === 'function') {
+                    notices = await getData('notices');
+                } else {
+                    notices = JSON.parse(localStorage.getItem('elim-notices') || '[]');
+                }
                 
-                // 공지사항 형식으로 변환
                 allNews = notices.map(notice => ({
                     id: notice.id,
                     title: notice.title,
                     content: notice.content,
                     author: notice.author || '관리자',
-                    date: new Date(notice.date || Date.now()),
-                    category: notice.category || '공지'
+                    date: new Date(notice.date || Date.now())
                 }));
                 
-                // 날짜순 정렬 (최신순)
                 allNews.sort((a, b) => b.date - a.date);
-                
-                filterNews(currentFilter);
+                renderNews();
             } catch (error) {
                 console.error('공지사항 로드 실패:', error);
                 container.innerHTML = '<div class="empty-state"><h3>공지사항을 불러오는데 실패했습니다.</h3><p>잠시 후 다시 시도해주세요.</p></div>';
             }
         }
 
-        function filterNews(category) {
-            currentFilter = category;
-            newsCurrentPage = 1;
-            
-            // 필터 버튼 활성화
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event?.target?.classList.add('active');
-            
-            // 필터링
-            if (category === 'all') {
-                filteredNews = [...allNews];
-            } else {
-                filteredNews = allNews.filter(news => news.category === category);
-            }
-            
-            renderNews();
-        }
-
         function renderNews() {
             const container = document.getElementById('newsList');
             
-            if (!filteredNews || filteredNews.length === 0) {
+            if (!allNews || allNews.length === 0) {
                 container.innerHTML = '<div class="empty-state"><h3>공지사항이 없습니다</h3><p>등록된 공지사항이 없습니다.</p></div>';
                 document.getElementById('pagination').innerHTML = '';
                 return;
             }
             
-            // 페이지네이션
-            const totalPages = Math.ceil(filteredNews.length / newsPerPage);
+            const totalPages = Math.ceil(allNews.length / newsPerPage);
             const start = (newsCurrentPage - 1) * newsPerPage;
             const end = start + newsPerPage;
-            const pageNews = filteredNews.slice(start, end);
+            const pageNews = allNews.slice(start, end);
             
             let html = '';
-            pageNews.forEach(news => {
-                const dateStr = news.date.toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                
+            pageNews.forEach((news, idx) => {
+                const dateStr = news.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
                 html += `
-                    <div class="news-item" onclick="viewNews(${news.id})">
+                    <div class="news-item" onclick="viewNews(${start + idx})">
                         <div class="news-item-header">
                             <span class="news-date">📅 ${dateStr}</span>
-                            <span class="news-category">${news.category}</span>
                         </div>
                         <h3>${news.title}</h3>
-                        <p>${news.content.replace(/\n/g, ' ').substring(0, 150)}${news.content.length > 150 ? '...' : ''}</p>
+                        <p>${(news.content || '').replace(/\n/g, ' ').substring(0, 150)}${(news.content || '').length > 150 ? '...' : ''}</p>
                         <div class="news-meta">
                             <span>👤 ${news.author}</span>
                         </div>
@@ -343,17 +313,11 @@
 
         function renderPagination(totalPages) {
             const container = document.getElementById('pagination');
-            
-            if (totalPages <= 1) {
-                container.innerHTML = '';
-                return;
-            }
-            
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
             let html = '';
             for (let i = 1; i <= totalPages; i++) {
                 html += `<button class="${i === newsCurrentPage ? 'active' : ''}" onclick="goToNewsPage(${i})">${i}</button>`;
             }
-            
             container.innerHTML = html;
         }
 
@@ -363,17 +327,12 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function viewNews(id) {
-            const news = allNews.find(n => n.id === id);
+        function viewNews(idx) {
+            const news = allNews[idx];
             if (!news) return;
             
-            const dateStr = news.date.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+            const dateStr = news.date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
             
-            // 모달 생성
             const modal = document.createElement('div');
             modal.className = 'modal';
             modal.style.display = 'flex';
@@ -381,37 +340,25 @@
                 <div class="modal-content" style="max-width: 800px;">
                     <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
                     <div style="margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                            <span style="color: #666; font-size: 0.9rem;">📅 ${dateStr}</span>
-                            <span class="news-category">${news.category}</span>
-                        </div>
-                        <h2 style="color: #2C3E50; margin-bottom: 20px; font-size: 1.8rem;">${news.title}</h2>
-                        <div style="margin-bottom: 20px; font-size: 0.9rem; color: #666; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <span style="color: #666; font-size: 0.9rem;">📅 ${dateStr}</span>
+                        <h2 style="color: #2C3E50; margin: 15px 0; font-size: 1.8rem;">${news.title}</h2>
+                        <div style="font-size: 0.9rem; color: #666; padding-bottom: 15px; border-bottom: 1px solid #eee;">
                             <span>👤 ${news.author}</span>
                         </div>
                     </div>
                     <div style="line-height: 1.8; color: #333; white-space: pre-wrap; font-size: 1rem; padding: 20px; background: #f9f9f9; border-radius: 5px;">
-                        ${news.content.replace(/\n/g, '<br>')}
+                        ${(news.content || '').replace(/\n/g, '<br>')}
                     </div>
                     <div style="margin-top: 20px; text-align: right;">
-                        <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">닫기</button>
+                        <button onclick="this.closest('.modal').remove()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">닫기</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
-            
-            // 모달 외부 클릭시 닫기
-            modal.onclick = function(event) {
-                if (event.target === modal) {
-                    modal.remove();
-                }
-            };
+            modal.onclick = function(event) { if (event.target === modal) modal.remove(); };
         }
 
-        // 페이지 로드 시 공지사항 불러오기
-        window.addEventListener('load', () => {
-            loadNews();
-        });
+        window.addEventListener('load', () => { loadNews(); });
     </script>
     <!-- 푸터 -->
     <footer style="text-align: center; padding: 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0;">
@@ -419,10 +366,6 @@
         <p style="margin: 5px 0; color: #666; font-size: 0.9rem;">T. 02-886-4623</p>
     </footer>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

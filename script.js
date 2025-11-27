@@ -552,6 +552,7 @@ let newsItems = [];
 
 async function loadNewsScrollItems() {
     const container = document.getElementById('newsScrollContent');
+    const dateContainer = document.getElementById('newsScrollDate');
     if (!container) return;
     
     try {
@@ -562,9 +563,17 @@ async function loadNewsScrollItems() {
             items = JSON.parse(localStorage.getItem('elim-news-scroll') || '[]');
         }
         
+        // 날짜 표시 (가장 최신 소식의 날짜)
+        if (dateContainer && items.length > 0) {
+            const latestDate = new Date(items[0].date || Date.now());
+            const dateStr = `[${latestDate.getFullYear().toString().slice(2)}.${String(latestDate.getMonth()+1).padStart(2,'0')}.${String(latestDate.getDate()).padStart(2,'0')}]`;
+            dateContainer.textContent = dateStr;
+        }
+        
         if (items.length === 0) {
             container.innerHTML = '<div class="news-scroll-item active">교회소식을 관리자 페이지에서 추가해주세요.</div>';
             newsItems = container.querySelectorAll('.news-scroll-item');
+            if (dateContainer) dateContainer.textContent = '';
             return;
         }
         

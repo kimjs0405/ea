@@ -172,14 +172,6 @@
             <h2 id="noticeModalTitle">새 공지사항</h2>
             <form onsubmit="saveNotice(event)">
                 <div class="form-group"><label>제목 *</label><input type="text" id="noticeTitle" required></div>
-                <div class="form-group"><label>카테고리</label>
-                    <select id="noticeCategory">
-                        <option value="공지">공지</option>
-                        <option value="이벤트">이벤트</option>
-                        <option value="예배">예배</option>
-                        <option value="교회활동">교회활동</option>
-                    </select>
-                </div>
                 <div class="form-group"><label>내용 *</label><textarea id="noticeContent" required></textarea></div>
                 <div style="display: flex; gap: 10px;">
                     <button type="submit" class="btn btn-primary">저장</button>
@@ -399,11 +391,9 @@
             document.getElementById('noticeModalTitle').textContent = idx !== null ? '공지사항 수정' : '새 공지사항';
             if (idx !== null) {
                 document.getElementById('noticeTitle').value = notices[idx].title || '';
-                document.getElementById('noticeCategory').value = notices[idx].category || '공지';
                 document.getElementById('noticeContent').value = notices[idx].content || '';
             } else {
                 document.getElementById('noticeTitle').value = '';
-                document.getElementById('noticeCategory').value = '공지';
                 document.getElementById('noticeContent').value = '';
             }
             document.getElementById('noticeModal').classList.add('active');
@@ -414,7 +404,7 @@
         
         async function saveNotice(e) {
             e.preventDefault();
-            const data = { title: document.getElementById('noticeTitle').value, category: document.getElementById('noticeCategory').value, content: document.getElementById('noticeContent').value, author: '관리자' };
+            const data = { title: document.getElementById('noticeTitle').value, content: document.getElementById('noticeContent').value, author: '관리자' };
             try {
                 if (editingId.notice) {
                     typeof updateData === 'function' ? await updateData('notices', editingId.notice, data) : updateLocal('elim-notices', editingId.notice, data);

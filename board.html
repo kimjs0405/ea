@@ -8,27 +8,206 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
-        }
+        body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; }
         
-        .news-page-header {
+        .board-page-header {
             background: linear-gradient(135deg, #2C5F8D 0%, #1E4263 100%);
             color: white;
             padding: 100px 0 60px;
             margin-top: 70px;
             text-align: center;
         }
+        .board-page-header h1 { font-size: 2.5rem; margin-bottom: 15px; font-weight: 600; }
+        .board-page-header p { font-size: 1.1rem; opacity: 0.9; }
         
-        .news-page-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            font-weight: 600;
+        .board-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
         
-        .news-page-header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #2C5F8D;
+        }
+        .board-header h2 { font-size: 1.3rem; color: #2C3E50; }
+        .board-total { color: #666; font-size: 0.9rem; }
+        
+        .write-btn {
+            padding: 10px 20px;
+            background: #2C5F8D;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .write-btn:hover { background: #1E4263; }
+        
+        /* 정통 게시판 테이블 스타일 */
+        .board-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        .board-table thead {
+            background: #f8f9fa;
+            border-top: 2px solid #333;
+            border-bottom: 1px solid #ddd;
+        }
+        .board-table th {
+            padding: 12px 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .board-table tbody tr {
+            border-bottom: 1px solid #e9e9e9;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .board-table tbody tr:hover { background: #f5f7fa; }
+        .board-table td {
+            padding: 14px 10px;
+            font-size: 0.9rem;
+            color: #333;
+        }
+        .board-table .col-num { width: 60px; text-align: center; color: #666; }
+        .board-table .col-title { text-align: left; }
+        .board-table .col-title a { 
+            color: #333; 
+            text-decoration: none; 
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .board-table .col-title a:hover { color: #2C5F8D; text-decoration: underline; }
+        .board-table .col-author { width: 100px; text-align: center; color: #666; }
+        .board-table .col-date { width: 100px; text-align: center; color: #888; }
+        
+        .new-badge {
+            display: inline-block;
+            background: #e74c3c;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+        
+        /* 페이지네이션 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 30px;
+        }
+        .pagination button {
+            min-width: 35px;
+            height: 35px;
+            border: 1px solid #ddd;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .pagination button:hover { background: #f0f0f0; }
+        .pagination button.active {
+            background: #2C5F8D;
+            color: white;
+            border-color: #2C5F8D;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+            background: #fafafa;
+            border: 1px solid #eee;
+        }
+        .empty-state h3 { font-size: 1.2rem; margin-bottom: 10px; color: #666; }
+        
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            right: 15px; top: 10px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-close:hover { color: #333; }
+        .modal-header {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { font-size: 1.5rem; color: #2C3E50; margin-bottom: 15px; }
+        .modal-meta { display: flex; gap: 20px; color: #666; font-size: 0.9rem; }
+        .modal-body {
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+            min-height: 200px;
+            padding: 20px;
+            background: #f9f9f9;
+            border: 1px solid #eee;
+        }
+        
+        /* 글쓰기 폼 */
+        .write-form input, .write-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .write-form textarea { min-height: 200px; resize: vertical; font-family: inherit; }
+        .write-form .btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+        .write-form button {
+            padding: 10px 25px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+        .btn-save { background: #2C5F8D; color: white; }
+        .btn-save:hover { background: #1E4263; }
+        .btn-cancel { background: #6c757d; color: white; }
+        .btn-cancel:hover { background: #5a6268; }
+        
+        @media (max-width: 768px) {
+            .board-page-header h1 { font-size: 1.8rem; }
+            .board-table .col-num { display: none; }
+            .board-table .col-author { width: 70px; }
+            .board-table .col-date { width: 80px; font-size: 0.8rem; }
+            .board-header { flex-direction: column; gap: 15px; align-items: stretch; }
         }
     </style>
 </head>
@@ -69,51 +248,75 @@
         </nav>
     </header>
 
-    <!-- 게시판 배너 -->
-    <section class="news-page-header">
+    <!-- 페이지 헤더 -->
+    <div class="board-page-header">
         <div class="container">
             <h1>게시판</h1>
             <p>교회 소식과 자유롭게 소통하는 공간</p>
         </div>
-    </section>
+    </div>
 
     <!-- 게시판 -->
-    <section id="board" class="section" style="background: #ffffff;">
-        <div class="container">
-            
-            <!-- 글쓰기 버튼 (모든 사용자) -->
-            <div style="text-align: right; margin-bottom: 20px;">
-                <button class="btn btn-primary" onclick="openWriteModal()">✏️ 글쓰기</button>
+    <div class="board-container">
+        <div class="board-header">
+            <div>
+                <h2>📝 자유게시판</h2>
+                <span class="board-total" id="boardTotal">총 0개</span>
             </div>
-            
-            <!-- 게시판 목록 -->
-            <div class="board-posts" id="boardPosts">
-                <div class="loading-message">
-                    <p>게시글을 불러오는 중...</p>
+            <button class="write-btn" onclick="openWriteModal()">✏️ 글쓰기</button>
+        </div>
+        
+        <table class="board-table">
+            <thead>
+                <tr>
+                    <th class="col-num">번호</th>
+                    <th class="col-title">제목</th>
+                    <th class="col-author">작성자</th>
+                    <th class="col-date">작성일</th>
+                </tr>
+            </thead>
+            <tbody id="boardList">
+                <tr><td colspan="4" style="text-align: center; padding: 40px;">게시글을 불러오는 중...</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- 상세보기 모달 -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeViewModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="viewTitle">제목</h2>
+                <div class="modal-meta">
+                    <span id="viewAuthor">👤 작성자</span>
+                    <span id="viewDate">📅 날짜</span>
                 </div>
             </div>
-            
-            <!-- 페이지네이션 -->
-            <div class="pagination" id="pagination"></div>
-        </div>
-    </section>
-    
-    <!-- 글쓰기/수정 모달 -->
-    <div id="postModal" class="modal" style="display: none;">
-        <div class="modal-content" style="border-radius: 0;">
-            <span class="close" onclick="closeWriteModal()" style="color: #64748b;">&times;</span>
-            <h2 id="modalTitle" style="color: #1e3a5f; margin-bottom: 20px;">글쓰기</h2>
-            <input type="text" id="postAuthor" placeholder="작성자 이름" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 0; font-size: 1rem;">
-            <input type="text" id="postTitle" placeholder="제목" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 0; font-size: 1rem;">
-            <textarea id="postContent" placeholder="내용을 입력하세요" style="width: 100%; min-height: 200px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 0; font-family: inherit; font-size: 1rem;"></textarea>
-            <div style="text-align: right; margin-top: 20px;">
-                <button class="btn btn-secondary" onclick="closeWriteModal()" style="border-radius: 0; border: 1px solid #6b7280;">취소</button>
-                <button class="btn btn-primary" onclick="savePost()" style="border-radius: 0; border: 1px solid #4A90C2;">저장</button>
+            <div class="modal-body" id="viewContent">내용</div>
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="closeViewModal()" class="btn-cancel" style="padding: 10px 30px;">목록으로</button>
             </div>
         </div>
     </div>
-    
 
+    <!-- 글쓰기 모달 -->
+    <div id="writeModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeWriteModal()">&times;</span>
+            <h2 style="margin-bottom: 20px; color: #2C3E50;">✏️ 글쓰기</h2>
+            <div class="write-form">
+                <input type="text" id="postAuthor" placeholder="작성자 이름">
+                <input type="text" id="postTitle" placeholder="제목을 입력하세요">
+                <textarea id="postContent" placeholder="내용을 입력하세요"></textarea>
+                <div class="btn-group">
+                    <button class="btn-cancel" onclick="closeWriteModal()">취소</button>
+                    <button class="btn-save" onclick="savePost()">저장</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 푸터 -->
     <footer style="text-align: center; padding: 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0;">
@@ -125,7 +328,182 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
+    
+    <script>
+        let allPosts = [];
+        let currentPage = 1;
+        const perPage = 15;
+
+        async function loadPosts() {
+            const tbody = document.getElementById('boardList');
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">게시글을 불러오는 중...</td></tr>';
+            
+            try {
+                let posts = [];
+                if (typeof getData === 'function') {
+                    posts = await getData('posts');
+                } else {
+                    posts = JSON.parse(localStorage.getItem('elim-posts') || '[]');
+                }
+                
+                allPosts = posts.map(p => ({
+                    id: p.id,
+                    title: p.title || '제목 없음',
+                    content: p.content || '',
+                    author: p.author || '익명',
+                    date: p.date || Date.now()
+                }));
+                
+                allPosts.sort((a, b) => b.date - a.date);
+                
+                document.getElementById('boardTotal').textContent = `총 ${allPosts.length}개`;
+                renderPosts();
+            } catch (error) {
+                console.error('로드 실패:', error);
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><h3>불러오기 실패</h3><p>잠시 후 다시 시도해주세요.</p></td></tr>';
+            }
+        }
+
+        function renderPosts() {
+            const tbody = document.getElementById('boardList');
+            
+            if (allPosts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><h3>게시글이 없습니다</h3><p>첫 번째 글을 작성해보세요!</p></div></td></tr>';
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+            
+            const totalPages = Math.ceil(allPosts.length / perPage);
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pagePosts = allPosts.slice(start, end);
+            
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            
+            let html = '';
+            pagePosts.forEach((post, idx) => {
+                const num = allPosts.length - start - idx;
+                const dateObj = new Date(post.date);
+                const dateStr = `${dateObj.getFullYear()}.${String(dateObj.getMonth()+1).padStart(2,'0')}.${String(dateObj.getDate()).padStart(2,'0')}`;
+                const isNew = (now - post.date) < oneDay;
+                
+                html += `
+                    <tr onclick="viewPost(${start + idx})">
+                        <td class="col-num">${num}</td>
+                        <td class="col-title">
+                            <a href="javascript:void(0)">${post.title}${isNew ? '<span class="new-badge">N</span>' : ''}</a>
+                        </td>
+                        <td class="col-author">${post.author}</td>
+                        <td class="col-date">${dateStr}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            renderPagination(totalPages);
+        }
+
+        function renderPagination(totalPages) {
+            const container = document.getElementById('pagination');
+            if (totalPages <= 1) { container.innerHTML = ''; return; }
+            
+            let html = '';
+            if (currentPage > 1) {
+                html += `<button onclick="goPage(1)">«</button>`;
+                html += `<button onclick="goPage(${currentPage - 1})">‹</button>`;
+            }
+            
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, currentPage + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="${i === currentPage ? 'active' : ''}" onclick="goPage(${i})">${i}</button>`;
+            }
+            
+            if (currentPage < totalPages) {
+                html += `<button onclick="goPage(${currentPage + 1})">›</button>`;
+                html += `<button onclick="goPage(${totalPages})">»</button>`;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function goPage(page) {
+            currentPage = page;
+            renderPosts();
+            window.scrollTo({ top: 300, behavior: 'smooth' });
+        }
+
+        function viewPost(idx) {
+            const post = allPosts[idx];
+            if (!post) return;
+            
+            const dateObj = new Date(post.date);
+            const dateStr = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일`;
+            
+            document.getElementById('viewTitle').textContent = post.title;
+            document.getElementById('viewAuthor').textContent = '👤 ' + post.author;
+            document.getElementById('viewDate').textContent = '📅 ' + dateStr;
+            document.getElementById('viewContent').innerHTML = (post.content || '').replace(/\n/g, '<br>');
+            
+            document.getElementById('viewModal').style.display = 'flex';
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').style.display = 'none';
+        }
+
+        function openWriteModal() {
+            document.getElementById('postAuthor').value = '';
+            document.getElementById('postTitle').value = '';
+            document.getElementById('postContent').value = '';
+            document.getElementById('writeModal').style.display = 'flex';
+        }
+
+        function closeWriteModal() {
+            document.getElementById('writeModal').style.display = 'none';
+        }
+
+        async function savePost() {
+            const author = document.getElementById('postAuthor').value.trim();
+            const title = document.getElementById('postTitle').value.trim();
+            const content = document.getElementById('postContent').value.trim();
+            
+            if (!author || !title || !content) {
+                alert('모든 항목을 입력해주세요.');
+                return;
+            }
+            
+            const postData = { title, content, author, date: Date.now() };
+            
+            try {
+                if (typeof addData === 'function') {
+                    await addData('posts', postData);
+                } else {
+                    const posts = JSON.parse(localStorage.getItem('elim-posts') || '[]');
+                    postData.id = Date.now().toString();
+                    posts.push(postData);
+                    localStorage.setItem('elim-posts', JSON.stringify(posts));
+                }
+                
+                closeWriteModal();
+                alert('글이 등록되었습니다.');
+                await loadPosts();
+            } catch (error) {
+                console.error('저장 실패:', error);
+                alert('저장에 실패했습니다. 다시 시도해주세요.');
+            }
+        }
+
+        window.onclick = function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        };
+
+        window.addEventListener('load', loadPosts);
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
-
